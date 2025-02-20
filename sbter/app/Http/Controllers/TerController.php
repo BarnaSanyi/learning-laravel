@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Gate;
 
 class TerController extends Controller
 {
@@ -15,7 +16,10 @@ class TerController extends Controller
      */
     public function index(): View
     {
-        return view('ters.index');
+        return view('ters.index', 
+        [
+            'ters' => Ter::with('user')->latest()->get(),
+        ]);
     }
 
     /**
@@ -51,24 +55,42 @@ class TerController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Ter $ter)
+    public function edit(Ter $ter): View
     {
-        //
+        Gate::authorize('update', $ter);
+    
+        return view('ters.edit', [
+            'ter' => $ter,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Ter $ter)
+    public function update(Request $request, Ter $ter): RedirectResponse
     {
-        //
+        Gate::authorize('update', $ter);
+
+        $validated = $request->validate([
+
+            'message' => 'required|string|max:255',
+
+        ]);
+
+        $ter->update($validated);
+
+        return redirect(route('ters.index'));
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Ter $ter)
+    public function destroy(Ter $ter): RedirectResponse
     {
-        //
+        Gate::authorize('delete', $ter);
+
+        $ter->delete();
+
+        return redirect(route('ters.index'));
     }
 }
